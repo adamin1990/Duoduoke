@@ -32,11 +32,33 @@
 
 class Duoduoke
 {
+    const  DDK_API_BASE_URL="http://gw-api.pinduoduo.com/api/router?";  //api基础url
     const MERCHANT_OAUTH_BASE_URL="http://mms.pinduoduo.com/open.html?";  //商家授权url
     const DDK_OAUTH_BASE_URL="http://jinbao.pinduoduo.com/open.html?";  //多多客授权url
     const  DDK_BASEURL="http://open-api.pinduoduo.com"; //多多客base url
     const  DDK_OAUTH_TOKEN_URL="/oauth/token";  //多多客获取access_token api
     const  DDK_OAUTH_GRANT_TYPE="authorization_code";  //授权类型
+
+    const  DDK_API_OAUTH_CMS_PROM_URL_GENERATE="pdd.ddk.oauth.cms.prom.url.generate";  //生成商城推广链接接口
+    const  DDK_API_OAUTH_GOODS_PID_GENERATE="pdd.ddk.oauth.goods.pid.generate";  //多多进宝推广位创建
+    const DDK_API_OAUTH_GOODS_PID_QUERY="pdd.ddk.oauth.goods.pid.query"; //多多客已生成推广位信息查询
+    const DDK_API_OAUTH_GOODS_PROM_URL_GENERATE="pdd.ddk.oauth.goods.prom.url.generate"; //生成多多进宝推广链接
+    const DDK_API_OAUTH_ORDER_LIST_INCREMENT_GET="pdd.ddk.oauth.order.list.increment.get"; //按照更新时间段增量同步推广订单信息
+    const  DDK_API_OAUTH_ORDER_LIST_RANGE_GET="pdd.ddk.oauth.order.list.range.get"; //按照时间段获取多多进宝推广订单信息
+    const DDK_API_OAUTH_RP_PROM_URL_GENERATE="pdd.ddk.oauth.rp.prom.url.generate"; //生成红包推广链接接口
+
+
+    const  DDK_API_GOODS_DETAIL="pdd.ddk.goods.detail";  //多多进宝商品详情查询
+    const  DDK_API_GOODS_SEARCH="pdd.ddk.goods.search"; //多多新报商品查询
+    const  DDK_API_GOODS_PID_QUERY="pdd.ddk.goods.pid.query"; //查询已生成的推广位信息
+    const DDK_API_GOODS_PID_GENERATE="pdd.ddk.goods.pid.generate";  //推广位创建
+    const  DDK_API_GOODS_PROMOTION_URL_GENERATE= "pdd.ddk.goods.promotion.url.generate";  //推广链接生成
+    const DDK_API_ORDER_LIST_RANGE_GET="pdd.ddk.order.list.range.get" ;//用时间段查询推广订单接口
+    const  DDK_API_ORDER_LIST_INCREMENT_GET="pdd.ddk.order.list.increment.get";  //最后更新时间段增量同步推广订单信息
+    const  DDK_API_CHECK_IN_PROM_BILL_INCR_GET="pdd.ddk.check.in.prom.bill.incr.get"; //签到红包分享账单列表
+    const  DDK_API_CHECK_IN_PROM_URL_GENERATE="pdd.ddk.check.in.prom.url.generate";  //生成签到分享推广链接
+    const DDK_API_RP_PROM_URL_GENERATE="pdd.ddk.rp.prom.url.generate";  //生成红包推广链接
+    const DDK_API_CMS_PROM_URL_GENERATE="pdd.ddk.cms.prom.url.generate"; //生成商城推广链接
     private  $client_id;
     private  $client_secret;
     private $duoduoke_redirect_url;
@@ -169,6 +191,31 @@ class Duoduoke
         $data["state"]=$state;
         $result=$this->http_post(self::DDK_BASEURL.self::DDK_OAUTH_TOKEN_URL,$data);
         return $result;
+    }
+
+    /**
+     * 参数排序并签名
+     * 1.所有参数进行按照首字母先后顺序排列
+     * 2-把排序后的结果按照参数名+参数值的方式拼接
+     * 3-拼装好的字符串首尾拼接client_secret进行md5加密后转大写，secret的值是拼多多开放平台后台分配的client_secret
+     * @param $params
+     * @author Adam
+     * @return  string
+     */
+    public function  ddk_sign($params){
+        if(is_array()){
+            $str="";
+                 ksort($params);
+                 foreach ($params as $k=>$v){
+                     $str.=($k.$v);
+                 }
+                 $str=$this->client_secret.$str;
+                 return strtoupper(md5($str));
+
+        }else{
+            return "";
+        }
+
     }
 
 
