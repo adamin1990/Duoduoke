@@ -80,6 +80,8 @@ class Duoduoke
      */
     private function http_post($url,$param,$post_file=false){
         $oCurl = curl_init();
+        $header[] = 'Accept:application/json';
+        $header[] = 'Content-Type:application/json;charset=utf-8';
         if(stripos($url,"https://")!==FALSE){
             curl_setopt($oCurl, CURLOPT_SSL_VERIFYPEER, FALSE);
             curl_setopt($oCurl, CURLOPT_SSL_VERIFYHOST, false);
@@ -105,15 +107,17 @@ class Duoduoke
             }
             $strPOST = $param;
         } else {
-            $aPOST = array();
-            foreach($param as $key=>$val){
-                $aPOST[] = $key."=".urlencode($val);
-            }
-            $strPOST =  join("&", $aPOST);
+//            $aPOST = array();
+//            foreach($param as $key=>$val){
+//                $aPOST[] = $key."=".urlencode($val);
+//            }
+//            $strPOST =  join("&", $aPOST);
+            $strPOST=json_encode($param);
         }
         curl_setopt($oCurl, CURLOPT_URL, $url);
         curl_setopt($oCurl, CURLOPT_RETURNTRANSFER, 1 );
         curl_setopt($oCurl, CURLOPT_POST,true);
+        curl_setopt($oCurl,CURLOPT_HTTPHEADER,$header);
         curl_setopt($oCurl, CURLOPT_POSTFIELDS,$strPOST);
         $sContent = curl_exec($oCurl);
         $aStatus = curl_getinfo($oCurl);
@@ -125,11 +129,19 @@ class Duoduoke
         }
     }
 
+    /**
+     * 返回授权url
+     * @param string $clitent_id
+     * @param string $redirect_uri
+     * @param string $state
+     */
     public function  duoduoke_oauth_code($clitent_id="",$redirect_uri="",$state="2333"){
-           if(!$this->client_id||!$redirect_uri){
-               $client_id=$this->client_id;
+           if(!$clitent_id||!$redirect_uri){
+               $clitent_id=$this->client_id;
                $redirect_uri=$this->duoduoke_redirect_url;
            }
+//http://jinbao.pinduoduo.com/open.html?client_id=ec049d08df8b5b082ba8566e73b94992&response_type=code&redirect_uri=http://hanshan.com
+           return self::DDK_OAUTH_BASE_URL."client_id=".$clitent_id."&response_type=code&redirect_uri=".$redirect_uri;
 
 
     }
