@@ -59,15 +59,31 @@ class Duoduoke
     const  DDK_API_CHECK_IN_PROM_URL_GENERATE = "pdd.ddk.check.in.prom.url.generate";  //生成签到分享推广链接
     const DDK_API_RP_PROM_URL_GENERATE = "pdd.ddk.rp.prom.url.generate";  //生成红包推广链接
     const DDK_API_CMS_PROM_URL_GENERATE = "pdd.ddk.cms.prom.url.generate"; //生成商城推广链接
+    const  DDK_API_GOODS_OPT_GET="pdd.goods.opt.get";  //获得平多多商品标签列表
+
+
+    const  DDK_DEFAULT_DATA_TYPE="JSON"; //默认返回数据类型
+    const DDK_DEFAULT_ACCESS_TOKEN="";  //默认访问令牌
+    const DDK_DEFAULT_VERSION="v1"; //api协议版本号
+
+
+
+   private  $ddk_common_params;   //公共配置
     private $client_id;
     private $client_secret;
     private $duoduoke_redirect_url;
+
 
     public function __construct($options)
     {
         $this->client_id = isset($options['client_id']) ? $options['client_id'] : "";
         $this->client_secret = isset($options["client_secret"]) ? $options["client_secret"] : "";
         $this->duoduoke_redirect_url = isset($options['duoduoke_redirect_url']) ? $options['duoduoke_redirect_url'] : "";
+        $this->ddk_common_params['client_id']=$this->client_id;
+        $this->ddk_common_params["timestamp"]=$_SERVER["REQUEST_TIME"];
+        $this->ddk_common_params["data_type"]=self::DDK_DEFAULT_DATA_TYPE;
+        $this->ddk_common_params["access_token"]=self::DDK_DEFAULT_ACCESS_TOKEN;
+        $this->ddk_common_params["version"]=self::DDK_DEFAULT_VERSION;
     }
 
     /**
@@ -238,10 +254,7 @@ class Duoduoke
     {
         $data["type"] = self::DDK_API_GOODS_DETAIL;
         $data["goods_id_list"] = "[" . $goodid . "]";
-        $data["client_id"] = $this->client_id;
-
-        $data["timestamp"] = time();
-        ksort($data);
+          $data=  array_merge($data,$this->ddk_common_params);
         $sign = $this->ddk_sign($data);
         if (!empty($sign)) {
             $data['sign'] = $sign;
@@ -253,6 +266,25 @@ class Duoduoke
         return $this->http_post(self::DDK_API_BASE_URL, $data);
 
 
+    }
+
+    /**
+     * 查询商品标签列表
+     * @param $parent_opt_id
+     * @author Adam
+     * Time: 9:03
+     */
+    public function api_goods_opt_get($parent_opt_id=0){
+        $data['parent_opt_id']=$parent_opt_id;
+        $data["type"]=self::DDK_API_GOODS_OPT_GET;
+        $data=array_merge($data,$this->ddk_common_params);
+        $sign = $this->ddk_sign($data);
+        if (!empty($sign)) {
+            $data['sign'] = $sign;
+        } else {
+            return false;
+        }
+        return $this->http_post(self::DDK_API_BASE_URL, $data);
     }
 
 
