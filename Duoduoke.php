@@ -59,16 +59,17 @@ class Duoduoke
     const  DDK_API_CHECK_IN_PROM_URL_GENERATE = "pdd.ddk.check.in.prom.url.generate";  //生成签到分享推广链接
     const DDK_API_RP_PROM_URL_GENERATE = "pdd.ddk.rp.prom.url.generate";  //生成红包推广链接
     const DDK_API_CMS_PROM_URL_GENERATE = "pdd.ddk.cms.prom.url.generate"; //生成商城推广链接
-    const  DDK_API_GOODS_OPT_GET="pdd.goods.opt.get";  //获得平多多商品标签列表
+    const  DDK_API_GOODS_OPT_GET = "pdd.goods.opt.get";  //获得多多商品标签列表
+    const DDK_API_GOODS_CAT_GET = "pdd.goods.cats.get"; //商品标准类目
 
 
-    const  DDK_DEFAULT_DATA_TYPE="JSON"; //默认返回数据类型
-    const DDK_DEFAULT_ACCESS_TOKEN="";  //默认访问令牌
-    const DDK_DEFAULT_VERSION="v1"; //api协议版本号
+    const  DDK_DEFAULT_DATA_TYPE = "JSON"; //默认返回数据类型
+    const DDK_DEFAULT_ACCESS_TOKEN = "";  //默认访问令牌
+    const DDK_DEFAULT_VERSION = "v1"; //api协议版本号
+    const  DDK_DEFAULT_PAGESIZE = 50; //默认大小
 
 
-
-   private  $ddk_common_params;   //公共配置
+    private $ddk_common_params;   //公共配置
     private $client_id;
     private $client_secret;
     private $duoduoke_redirect_url;
@@ -79,11 +80,12 @@ class Duoduoke
         $this->client_id = isset($options['client_id']) ? $options['client_id'] : "";
         $this->client_secret = isset($options["client_secret"]) ? $options["client_secret"] : "";
         $this->duoduoke_redirect_url = isset($options['duoduoke_redirect_url']) ? $options['duoduoke_redirect_url'] : "";
-        $this->ddk_common_params['client_id']=$this->client_id;
-        $this->ddk_common_params["timestamp"]=$_SERVER["REQUEST_TIME"];
-        $this->ddk_common_params["data_type"]=self::DDK_DEFAULT_DATA_TYPE;
-        $this->ddk_common_params["access_token"]=self::DDK_DEFAULT_ACCESS_TOKEN;
-        $this->ddk_common_params["version"]=self::DDK_DEFAULT_VERSION;
+        $this->ddk_common_params['client_id'] = $this->client_id;
+        $this->ddk_common_params["timestamp"] = time();
+        $this->ddk_common_params["data_type"] = self::DDK_DEFAULT_DATA_TYPE;
+        $this->ddk_common_params["access_token"] = self::DDK_DEFAULT_ACCESS_TOKEN;
+        $this->ddk_common_params["version"] = self::DDK_DEFAULT_VERSION;
+        $this->ddk_common_params["client_secret"] = $this->client_secret;
     }
 
     /**
@@ -254,16 +256,9 @@ class Duoduoke
     {
         $data["type"] = self::DDK_API_GOODS_DETAIL;
         $data["goods_id_list"] = "[" . $goodid . "]";
-          $data=  array_merge($data,$this->ddk_common_params);
-        $sign = $this->ddk_sign($data);
-        if (!empty($sign)) {
-            $data['sign'] = $sign;
-        } else {
-            return false;
-        }
 
 
-        return $this->http_post(self::DDK_API_BASE_URL, $data);
+        return $this->merge_sign_return($data);
 
 
     }
@@ -274,17 +269,156 @@ class Duoduoke
      * @author Adam
      * Time: 9:03
      */
-    public function api_goods_opt_get($parent_opt_id=0){
-        $data['parent_opt_id']=$parent_opt_id;
-        $data["type"]=self::DDK_API_GOODS_OPT_GET;
-        $data=array_merge($data,$this->ddk_common_params);
-        $sign = $this->ddk_sign($data);
+    public function api_goods_opt_get($parent_opt_id = 0)
+    {
+        $data['parent_opt_id'] = $parent_opt_id;
+        $data["type"] = self::DDK_API_GOODS_OPT_GET;
+
+        return $this->merge_sign_return($data);
+    }
+
+    /**
+     * 商品标准类目列表
+     * @param int $parent_cat_id
+     * @return bool|string
+     * @author Adam
+     * Time: 9:32
+     */
+    public function api_goods_cat_get($parent_cat_id = 0)
+    {
+        $data['parent_cat_id'] = $parent_cat_id;
+        $data['type'] = self::DDK_API_GOODS_CAT_GET;
+
+        return $this->merge_sign_return($data);
+    }
+
+    /**
+     * 多多进宝商品查询
+     * @param string $keyword
+     * @param int $opt_id 商品关键词，与opt_id字段选填一个或全部填写
+     * @param int $page
+     * @param int $page_size
+     * @param int $sort_type 排序方式：0-综合排序；1-按佣金比率升序；2-按佣金比例降序；3-按价格升序；4-按价格降序；5-按销量升序；6-按销量降序；7-优惠券金额排序升序；8-优惠券金额排序降序；9-券后价升序排序；10-券后价降序排序；11-按照加入多多进宝时间升序；12-按照加入多多进宝时间降序
+     * @param bool $with_coupon 是否只返回优惠券的商品，false返回所有商品，true只返回有优惠券的商品  这个地方用字符串
+     * @param string $range_list 范围列表，可选值：[{"range_id":0,"range_from":1,"range_to":1500},{"range_id":1,"range_from":1,"range_to":1500}]
+     * 如果左区间不限制，range_from传空就行，右区间不限制，range_to传空就行
+     * range_id 查询维度ID，枚举值如下：0-商品拼团价格区间，1-商品券后价价格区间，2-佣金比例区间，3-优惠券金额区间，4-加入多多进宝时间区间，5-销量区间，6-佣金金额区间
+     * @param int $cat_id 商品类目ID，使用pdd.goods.cats.get接口获取
+     * @param string $goods_id_list 商品ID列表。例如：[123456,123]，当入参带有goods_id_list字段，将不会以opt_id、 cat_id、keyword维度筛选商品
+     * @return bool|string
+     * @author Adam
+     * Time: 10:15
+     */
+    public function api_goods_search($keyword = "", $opt_id = 0, $page = 1, $page_size = self::DDK_DEFAULT_PAGESIZE, $sort_type = 0, $with_coupon = true, $range_list = "", $cat_id = 0, $goods_id_list = "")
+    {
+        $data['type'] = self::DDK_API_GOODS_SEARCH;
+        if (!empty($keyword)) {
+            $data['keyword'] = urlencode($keyword);
+        }
+        if (!empty($opt_id)) {
+            $data['opt_id'] = $opt_id;
+        }
+        $data["page"] = $page;
+        $data["page_size"] = $page_size;
+        $data["sort_type"] = $sort_type;
+        $data['with_coupon'] =$with_coupon?"true":"false";
+        if (!empty($range_list)) {
+            $data["range_list"] = $range_list;
+
+        }
+        if (!empty($cat_id)) {
+            $data["cat_id"] = $cat_id;
+        }
+        if (!empty($goods_id_list)) {
+            $data["goods_id_list"] = $goods_id_list;
+        }
+
+
+        return $this->merge_sign_return($data);
+    }
+
+
+    /**
+     * 查询已经生成的推广位信息
+     * @param int $page
+     * @param int $page_size
+     * @return bool|string
+     * @author Adam
+     * Time: 15:17
+     */
+    public function api_goods_pid_query($page = 1, $page_size = self::DDK_DEFAULT_PAGESIZE)
+    {
+        $data["type"] = self::DDK_API_GOODS_PID_QUERY;
+        $data["page"] = $page;
+        $data["page_size"] = $page_size;
+        return $this->merge_sign_return($data);
+
+    }
+
+
+    /**
+     * 创建多多进宝推广位
+     * @param int $number 创建数量
+     * @return bool|string
+     * @author Adam
+     * Time: 16:50
+     */
+    public function  api_goods_pid_generate($number=1){
+        $data["type"]=self::DDK_API_GOODS_PID_GENERATE;
+        $data["number"]=$number;
+        return $this->merge_sign_return($data);
+    }
+
+    /**
+     * 多多进宝推广链接生成
+     * @param string $pid  推广位ID
+     * @param $goodid  商品ID，仅支持单个查询
+     * @param bool $generate_short  是否生成短链接，true-是，false-否
+     * @param bool $multi_group true--生成多人团推广链接 false--生成单人团推广链接（默认false）1、单人团推广链接：用户访问单人团推广链接H5页面，可直接购买商品无需拼团。（若用户访问APP，则按照多人团推广链接处理）2、多人团推广链接：用户访问双人团推广链接开团，若用户分享给他人参团，则开团者和参团者的佣金均结算给推手。
+     * @param string $custom_parameters  自定义参数，为链接打上自定义标签。自定义参数最长限制64个字节。
+     * @return bool|string
+     * @author Adam
+     * Time: 17:05
+     */
+    public function  api_goods_promotion_url_generate($goodid,$pid="1005378_14197486",$generate_short=true,$multi_group=false,$custom_parameters=""){
+        $data["type"]=self::DDK_API_GOODS_PROMOTION_URL_GENERATE;
+        $data['p_id']=$pid;
+        $data["goods_id_list"]="[".$goodid."]";
+        $data["generate_short_url"]=$generate_short?"true":"false";
+        $data["multi_group"]=$multi_group?"true":"false";
+        $data["custom_parameters"]=$custom_parameters;
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
+     *
+     * 合并参数数组，签名 发起请求并返回数据
+     * @param $data
+     * @return bool|string
+     * @author Adam
+     * Time: 10:11
+     */
+    private function merge_sign_return($data)
+    {
+        $data1 = array_merge($data, $this->ddk_common_params);
+
+        $sign = $this->ddk_sign($data1);
         if (!empty($sign)) {
-            $data['sign'] = $sign;
+            $data1['sign'] = $sign;
+
         } else {
             return false;
         }
-        return $this->http_post(self::DDK_API_BASE_URL, $data);
+
+        //way 1
+//        $str="?";
+//        foreach ($data1 as $k=>$v){
+//            $str.=$k."=".$v."&";
+//        }
+//       $str= substr($str,0,-1);
+//        return $this->http_post(self::DDK_API_BASE_URL.$str);
+        return $this->http_post(self::DDK_API_BASE_URL, $data1);
     }
 
 
