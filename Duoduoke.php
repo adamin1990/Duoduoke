@@ -64,7 +64,6 @@ class Duoduoke
 
 
     const  DDK_DEFAULT_DATA_TYPE = "JSON"; //默认返回数据类型
-    const DDK_DEFAULT_ACCESS_TOKEN = "";  //默认访问令牌
     const DDK_DEFAULT_VERSION = "v1"; //api协议版本号
     const  DDK_DEFAULT_PAGESIZE = 50; //默认大小
 
@@ -72,6 +71,7 @@ class Duoduoke
     private $ddk_common_params;   //公共配置
     private $client_id;
     private $client_secret;
+    private $access_token;
     private $duoduoke_redirect_url;
 
 
@@ -80,10 +80,11 @@ class Duoduoke
         $this->client_id = isset($options['client_id']) ? $options['client_id'] : "";
         $this->client_secret = isset($options["client_secret"]) ? $options["client_secret"] : "";
         $this->duoduoke_redirect_url = isset($options['duoduoke_redirect_url']) ? $options['duoduoke_redirect_url'] : "";
+        $this->access_token=isset($options["access_token"])?$options["access_token"]:"";
         $this->ddk_common_params['client_id'] = $this->client_id;
         $this->ddk_common_params["timestamp"] = time();
         $this->ddk_common_params["data_type"] = self::DDK_DEFAULT_DATA_TYPE;
-        $this->ddk_common_params["access_token"] = self::DDK_DEFAULT_ACCESS_TOKEN;
+        $this->ddk_common_params["access_token"] = $this->access_token;
         $this->ddk_common_params["version"] = self::DDK_DEFAULT_VERSION;
         $this->ddk_common_params["client_secret"] = $this->client_secret;
     }
@@ -508,6 +509,141 @@ class Duoduoke
         $data["multi_group"]=$multi_group?"true":"false";
         return $this->merge_sign_return($data);
 
+    }
+
+    /**
+     *
+     * 生成商城推广链接接口
+     * @param $p_id_list  推广位列表，例如：["60005_612"]
+     * @param bool $generate_short_url  否生成短链接。true-是，false-否，默认false
+     * @param bool $generate_mobile  是否生成手机跳转链接。true-是，false-否，默认false
+     * @param bool $multi_group 单人团多人团标志。true-多人团，false-单人团 默认false
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:17
+     */
+    public function  api_oauth_cms_prom_url_generate($p_id_list,$generate_short_url=true,$generate_mobile=true,$multi_group=true){
+        $data["type"]=self::DDK_API_OAUTH_CMS_PROM_URL_GENERATE;
+        $data["p_id_list"]=$p_id_list;
+        $data["generate_short_url"]=$generate_short_url?"true":"false";
+        $data["generate_mobile"]=$generate_mobile?"true":"false";
+        $data["multi_group"]=$multi_group?"true":"false";
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
+     * 多多进宝推广位创建接口
+     * @param $number  要生成的推广位数量，默认为10，范围为：1~100
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:23
+     */
+    public function  api_oauth_goods_pid_generate($number){
+        $data["type"]=self::DDK_API_OAUTH_GOODS_PID_GENERATE;
+        $data["number"]=$number;
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
+     *
+     * 多多客已生成推广位信息查询
+     * @param int $page
+     * @param int $page_size
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:26
+     */
+
+    public function  api_oauth_goods_pid_query($page=1,$page_size=50){
+        $data["type"]=self::DDK_API_OAUTH_GOODS_PID_QUERY;
+        $data["page"]=$page;
+        $data["page_size"]=$page_size;
+        return $this->merge_sign_return($data);
+    }
+
+    /**
+     * 生成多多进宝推广链接
+     * @param string $p_id  推广位ID
+     * @param $goods_id_list  商品ID，仅支持单个查询
+     * @param bool $generate_short_url  是否生成短链接，true-是，false-否
+     * @param bool $multi_group true--生成多人团推广链接 false--生成单人团推广链接（默认false）1、单人团推广链接：用户访问单人团推广链接H5页面，可直接购买商品无需拼团。（若用户访问APP，则按照多人团推广链接处理）2、多人团推广链接：用户访问双人团推广链接开团，若用户分享给他人参团，则开团者和参团者的佣金均结算给推手。
+     * @param string $custom_parameters  自定义参数，为链接打上自定义标签。自定义参数最长限制64个字节。
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:32
+     */
+    public function  api_oauth_goods_prom_url_generate($p_id="1005378_14197486",$goods_id_list,$generate_short_url=true,$multi_group=true,$custom_parameters=""){
+        $data["type"]=self::DDK_API_OAUTH_GOODS_PROM_URL_GENERATE;
+        $data["p_id"]=$p_id;
+        $data["goods_id_list"]=$goods_id_list;
+        $data["generate_short_url"]=$generate_short_url?"true":"false";
+        $data["multi_group"]=$multi_group?"true":"false";
+        $data["custom_parameters"]=$custom_parameters;
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
+     * 按照更新时间段增量同步推广订单信息
+     * @param $start_update_time 最近90天内多多进宝商品订单更新时间--查询时间开始。note：此时间为时间戳，指格林威治时间 1970 年01 月 01 日 00 时 00 分 00 秒(北京时间 1970 年 01 月 01 日 08 时 00 分 00 秒)起至现在的总秒数
+     * @param $end_update_time 最近90天内多多进宝商品订单更新时间--查询时间结束。note：此时间为时间戳，指格林威治时间 1970 年01 月 01 日 00 时 00 分 00 秒(北京时间 1970 年 01 月 01 日 08 时 00 分 00 秒)起至现在的总秒数
+     * @param $p_id  推广位ID
+     * @param int $page_size
+     * @param int $page
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:36
+     */
+    public function  api_oauth_order_list_increment_get($start_update_time,$end_update_time,$p_id,$page_size=50,$page=1){
+        $data["type"]=self::DDK_API_OAUTH_ORDER_LIST_INCREMENT_GET;
+        $data["start_update_time"]=$start_update_time;
+        $data["end_update_time"]=$end_update_time;
+        $data["p_id"]=$p_id;
+        $data["page_size"]=$page_size;
+        $data["page"]=$page;
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
+     * 按照时间段获取多多进宝推广订单信息
+     * @param $start_time  查询最近90天内多多进宝商品创建订单开始时间。格式:yyyy-MM-dd
+     * @param $end_time  查询最近90天内多多进宝商品创建订单结束时间。格式:yyyy-MM-dd
+     * @param $p_id  推广位ID
+     * @param int $page_size
+     * @param int $page
+     * @param int $time_type  过滤的时间类型：0--创建时间，1--支付时间， 9--最后更新时间 （默认0）
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:40
+     */
+    public function  api_oauth_order_list_range_get($start_time,$end_time,$p_id,$page_size=50,$page=1,$time_type=0){
+        $data["type"]=self::DDK_API_OAUTH_ORDER_LIST_RANGE_GET;
+        $data["start_time"]=$start_time;
+        $data["end_time"]=$end_time;
+        $data["p_id"]=$p_id;
+        $data["page_size"]=$page_size;
+        $data["page"]=$page;
+        $data["time_type"]=$time_type;
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
+     * 生成红包推广链接接口
+     * @param $p_id_list  推广位列表，例如：["60005_612"]
+     * @param bool $generate_short_url  是否生成短链接。true-是，false-否，默认false
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:43
+     */
+    public function  api_oauth_rp_prom_url_generate($p_id_list,$generate_short_url=true){
+        $data["type"]=self::DDK_API_OAUTH_RP_PROM_URL_GENERATE;
+        $data["p_id_list"]=$p_id_list;
+        $data["generate_short_url"]=$generate_short_url?"true":"false";
+        return $this->merge_sign_return($data);
     }
 
     /**
