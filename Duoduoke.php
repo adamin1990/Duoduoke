@@ -463,6 +463,54 @@ class Duoduoke
     }
 
     /**
+     * 生成签到分享推广链接
+     * @param string $p_id
+     * @author Adam
+     * Time: 2018/5/15 22:37
+     */
+    public function  api_check_in_prom_url_generate($p_id="1005378_14197486"){
+        $data["type"]=self::DDK_API_CHECK_IN_PROM_URL_GENERATE;
+        $data["p_id"]=$p_id;
+        return $this->merge_sign_return($data);
+    }
+
+    /**
+     * 生成红包推广链接
+     * @param $p_id_list  推广位列表，例如：["60005_612"]
+     * @param bool $generate_short_url   是否生成短链接。true-是，false-否，默认false
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:04
+     */
+    public function  api_rp_prom_url_generate($p_id_list,$generate_short_url=true){
+
+          $data["type"]=self::DDK_API_RP_PROM_URL_GENERATE;
+          $data["generate_short_url"]=$generate_short_url?"true":"false";
+          $data["p_id_list"]=$p_id_list;
+          return $this->merge_sign_return($data);
+    }
+
+    /**
+     * 生成商城推广链接
+     * @param $p_id_list  推广位列表，例如：["60005_612"]
+     * @param bool $multi_group   单人团多人团标志。true-多人团，false-单人团 默认false
+     * @param bool $generate_short_url  是否生成短链接，true-是，false-否
+     * @param bool $generate_mobile  是否生成手机跳转链接。true-是，false-否，默认false
+     * @return bool|string
+     * @author Adam
+     * Time: 2018/5/15 23:09
+     */
+    public function api_cms_prom_url_generate($p_id_list,$multi_group=true,$generate_short_url=true,$generate_mobile=true){
+        $data["type"]=self::DDK_API_CMS_PROM_URL_GENERATE;
+        $data["p_id_list"]=$p_id_list;
+        $data["generate_short_url"]=$generate_short_url?"true":"false";
+        $data["generate_mobile"]=$generate_mobile?"true":"false";
+        $data["multi_group"]=$multi_group?"true":"false";
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
      *
      * 合并参数数组，签名 发起请求并返回数据
      * @param $data
