@@ -441,6 +441,28 @@ class Duoduoke
     }
 
     /**
+     * 签到红包分享账单列表
+     * @param $start_time  最后更新时间--查询时间开始。note：此时间为时间戳，指格林威治时间 1970 年01 月 01 日 00 时 00 分 00 秒(北京时间 1970 年 01 月 01 日 08 时 00 分 00 秒)起至现在的总秒数
+     * @param $end_time   最后更新时间--查询时间结束。note：此时间为时间戳，指格林威治时间 1970 年01 月 01 日 00 时 00 分 00 秒(北京时间 1970 年 01 月 01 日 08 时 00 分 00 秒)起至现在的总秒数
+     * @param int $page_size 返回的每页结果订单数，默认为100，范围为10到100，建议使用40~50，可以提高成功率，减少超时数量。
+     * @param int $page   第几页，从1到10000，默认1，注：使用最后更新时间范围增量同步时，必须采用倒序的分页方式（从最后一页往回取）才能避免漏单问题
+     * @param string $p_id
+     * @return bool|string
+     * @author Adam
+     * Time: 22:22
+     */
+    public function  api_check_in_prom_bill_incr_get($start_time,$end_time,$page_size=50,$page=1,$p_id="1005378_14197486"){
+        $data["type"]=self::DDK_API_CHECK_IN_PROM_BILL_INCR_GET;
+        $data["start_time"]=$start_time;
+        $data["end_time"]=$end_time;
+        $data["page_size"]=$page_size;
+        $data["page"]=$page;
+        $data["p_id"]=$p_id;
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
      *
      * 合并参数数组，签名 发起请求并返回数据
      * @param $data
