@@ -12,13 +12,13 @@
     $ddk=new Duoduoke($config);
     echo $ddk->api_goods_cat_get();
 
-#Author
+# Author
 
 Adamin90  
 email: adamin1990@gmail.com  
 website: https://www.lixiaopeng.top
 
-#Lisence 
+# Lisence 
 
 MIT.
 
