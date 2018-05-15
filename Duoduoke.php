@@ -392,6 +392,55 @@ class Duoduoke
     }
 
     /**
+     * 用时间段查询推广订单接口
+     * @param $start_time  查询最近90天内多多进宝商品创建订单开始时间。格式:yyyy-MM-dd
+     * @param $end_time    查询最近90天内多多进宝商品创建订单结束时间。格式:yyyy-MM-dd
+     * @param string $pid  推广位ID
+     * @param int $page_size  返回的每页结果订单数，默认为100，范围为10到100，建议使用40~50，可以提高成功率，减少超时数量。
+     * @param int $page  第几页，从1到10000，默认1，注：使用最后更新时间范围增量同步时，必须采用倒序的分页方式（从最后一页往回取）才能避免漏单问题。
+     * @param int $time_type  过滤的时间类型：0--创建时间，1--支付时间， 9--最后更新时间 （默认0）
+     * @return bool|string
+     * @author Adam
+     * Time: 17:29
+     */
+    public function  api_order_list_range_get($start_time,$end_time,$pid="",$page_size=50,$page=1,$time_type=0){
+        $data["type"]=self::DDK_API_ORDER_LIST_RANGE_GET;
+        $data["start_time"]=$start_time;
+        $data["end_time"]=$end_time;
+        if(!empty($pid)){
+            $data["p_id"]=$pid;
+        }
+        $data["page_size"]=$page_size;
+        $data["page"]=$page;
+        $data["time_type"]=$time_type;
+        return $this->merge_sign_return($data);
+    }
+
+    /**
+     * 最后更新时间段增量同步推广订单信息
+     * @param $start_update_time 最近90天内多多进宝商品订单更新时间--查询时间开始。note：此时间为时间戳，指格林威治时间 1970 年01 月 01 日 00 时 00 分 00 秒(北京时间 1970 年 01 月 01 日 08 时 00 分 00 秒)起至现在的总秒数
+     * @param $end_update_time  最近90天内多多进宝商品订单更新时间--查询时间结束。note：此时间为时间戳，指格林威治时间 1970 年01 月 01 日 00 时 00 分 00 秒(北京时间 1970 年 01 月 01 日 08 时 00 分 00 秒)起至现在的总秒数
+     * @param string $p_id  推广位ID
+     * @param int $page_size 返回的每页结果订单数，默认为100，范围为10到100，建议使用40~50，可以提高成功率，减少超时数量。
+     * @param int $page  第几页，从1到10000，默认1，注：使用最后更新时间范围增量同步时，必须采用倒序的分页方式（从最后一页往回取）才能避免漏单问题。
+     * @return bool|string
+     * @author Adam
+     * Time: 17:39
+     */
+    public function  api_order_list_increment_get($start_update_time,$end_update_time,$p_id="",$page_size=50,$page=1){
+        $data["type"]=self::DDK_API_ORDER_LIST_INCREMENT_GET;
+        $data["start_update_time"]=$start_update_time;
+        $data["end_update_time"]=$end_update_time;
+        if(!empty($pid)){
+            $data["p_id"]=$p_id;
+        }
+        $data["page_size"]=$page_size;
+        $data["page"]=$page;
+        return $this->merge_sign_return($data);
+
+    }
+
+    /**
      *
      * 合并参数数组，签名 发起请求并返回数据
      * @param $data
